@@ -110,16 +110,16 @@ def eff_disc_from_eff_int(
 
     # convert i to yearly effective if it is not already
     if old_t is not None:
-        i = eff_int_from_eff_int(i=i, old_t=old_t, new_t=1)
+        i = eff_int_from_eff_int(i=i, old_t=old_t, new_t=1).rate
 
-    d = discount_from_interest(i=i.rate)
+    d = discount_from_interest(i=i)
 
     # assume new interval is 1 if not specified
     if new_t is not None:
-        d = eff_disc_from_eff_disc(d=d, old_t=1, new_t=new_t)
+        d = eff_disc_from_eff_disc(d=d, old_t=1, new_t=new_t).rate
 
     res = RateTemplate(
-        rate=d.rate,
+        rate=d,
         formal_pattern="Effective Discount",
         interval=new_t
     )
@@ -221,7 +221,7 @@ def nom_int_from_eff_disc(
 
     # convert d to yearly effective if it is not already
     if old_t is not None:
-        d = eff_disc_from_eff_disc(d=d, old_t=old_t, new_t=1)
+        d = eff_disc_from_eff_disc(d=d, old_t=old_t, new_t=1).rate
 
     i = interest_from_discount(d=d)
 
@@ -232,8 +232,8 @@ def nom_int_from_eff_disc(
 
 def eff_disc_from_eff_disc(
         d: float,
-        old_t: float,
-        new_t: float
+        old_t: float = None,
+        new_t: float = None
 ) -> RateTemplate:
     """
     A nominal/effective interest/discount rate converter. Given an effective discount rate and unit of time, along \
@@ -250,12 +250,15 @@ def eff_disc_from_eff_disc(
     :rtype: RateTemplate
     """
     # first convert to single-period rate
-    d1 = 1 - (1 - d) ** (1 / old_t)
+    if old_t is not None:
+        d = 1 - (1 - d) ** (1 / old_t)
+
     # then, convert to new interval
-    new_d = 1 - ((1 - d1) ** new_t)
+    if new_t is not None:
+        d = 1 - ((1 - d) ** new_t)
 
     res = RateTemplate(
-        rate=new_d,
+        rate=d,
         formal_pattern='Effective Discount',
         interval=new_t
     )
